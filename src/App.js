@@ -208,7 +208,7 @@ const Login = ({ onLogin }) => {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>⚡ React Speed</h1>
+        <h1>Reaction Speed Tester</h1>
         <h2>{isSignUp ? 'Create Account' : 'Login'}</h2>
         
         {error && (
@@ -481,7 +481,7 @@ const Home = ({ user, onLogout }) => {
   return (
     <div className="home-container">
       <nav className="navbar">
-        <h1 className="logo">⚡ React Speed</h1>
+        <h1 className="logo">Reaction Speed Tester</h1>
         <div className="nav-tabs">
           {['home', 'test', 'leaderboards', 'account'].map(tab => (
             <button
