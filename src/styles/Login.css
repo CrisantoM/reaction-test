@@ -1,0 +1,182 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #e10600 100%);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card {
+  background-color: #1a1a1a;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(225, 6, 0, 0.3);
+  border: 2px solid #e10600;
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.login-card h1 {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 2rem;
+  color: #e10600;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.login-card h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+  color: #cccccc;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 15px;
+  border: 2px solid #333333;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  transition: border-color 0.3s;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: #e10600;
+}
+
+.login-card button {
+  width: 100%;
+  padding: 14px;
+  background-color: #e10600;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.login-card button:hover {
+  background-color: #b30500;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(225, 6, 0, 0.4);
+}
+
+.login-card button:disabled {
+  background-color: #555555;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.message {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-weight: 600;
+  border: 2px solid;
+}
+
+.message.error {
+  background-color: #1a0000;
+  color: #ff4444;
+  border-color: #ff4444;
+}
+
+.message.success {
+  background-color: #001a00;
+  color: #00ff88;
+  border-color: #00ff88;
+}
+
+.toggle-auth {
+  text-align: center;
+  margin-top: 20px;
+  color: #cccccc;
+}
+
+.toggle-auth button {
+  background: none;
+  border: none;
+  color: #e10600;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: 5px;
+  font-size: 1rem;
+  width: auto;
+  padding: 0;
+  font-weight: bold;
+}
+
+.toggle-auth button:hover {
+  color: #b30500;
+}
+
+.forgot-password {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.forgot-password-link {
+  background: none;
+  border: none;
+  color: #999999;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.9rem;
+  padding: 0;
+  width: auto;
+}
+
+.forgot-password-link:hover {
+  color: #e10600;
+}
+
+.secondary-btn {
+  background-color: #333333 !important;
+}
+
+.secondary-btn:hover {
+  background-color: #4a4a4a !important;
+}
+
+.login-card select {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 15px;
+  border: 2px solid #333333;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  transition: border-color 0.3s;
+  cursor: pointer;
+}
+
+.login-card select:focus {
+  outline: none;
+  border-color: #e10600;
+}
+
+.login-card select option {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
