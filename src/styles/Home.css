@@ -246,3 +246,195 @@
   transform: translateY(4px);
   box-shadow: 0 1px 2px rgba(225, 6, 0, 0.5);
 }
+
+/* Percentile Section */
+.percentile-section {
+  margin: 50px 0;
+}
+
+.percentile-section h2 {
+  font-size: 2rem;
+  color: #e10600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.percentile-card {
+  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  border: 3px solid #e10600;
+  border-radius: 12px;
+  padding: 40px;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 40px;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(225, 6, 0, 0.3);
+}
+
+.percentile-main {
+  text-align: center;
+  border-right: 2px solid #e10600;
+  padding-right: 40px;
+}
+
+.percentile-number {
+  font-size: 5rem;
+  font-weight: bold;
+  color: #e10600;
+  text-shadow: 0 0 30px rgba(225, 6, 0, 0.8);
+  line-height: 1;
+}
+
+.percentile-label {
+  font-size: 1.5rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: 10px;
+}
+
+.percentile-details {
+  color: #ccc;
+}
+
+.percentile-details p {
+  margin: 12px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.percentile-details strong {
+  color: #e10600;
+  font-weight: 700;
+}
+
+.sample-size {
+  color: #666 !important;
+  font-size: 0.9rem !important;
+  font-style: italic;
+  margin-top: 20px !important;
+}
+
+/* Graph Section */
+.graph-section {
+  margin: 50px 0;
+}
+
+.graph-section h2 {
+  font-size: 2rem;
+  color: #e10600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.graph-container {
+  background-color: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 12px;
+  padding: 30px;
+}
+
+/* Quick Stats / Useful Information */
+.quick-stats {
+  margin: 50px 0;
+}
+
+.quick-stats h2 {
+  font-size: 2rem;
+  color: #e10600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.info-card {
+  background-color: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 12px;
+  padding: 25px;
+  display: flex;
+  gap: 20px;
+  transition: all 0.3s;
+}
+
+.info-card:hover {
+  border-color: #e10600;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(225, 6, 0, 0.2);
+}
+
+.info-icon {
+  font-size: 3rem;
+  min-width: 60px;
+  text-align: center;
+}
+
+.info-content h3 {
+  font-size: 1.2rem;
+  color: #e10600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-content p {
+  color: #ccc;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.info-content strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* No Data Message */
+.no-data-message {
+  background-color: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 12px;
+  padding: 60px;
+  text-align: center;
+  margin: 40px 0;
+}
+
+.no-data-message h2 {
+  color: #e10600;
+  font-size: 2rem;
+  margin-bottom: 15px;
+}
+
+.no-data-message p {
+  color: #999;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .percentile-card {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .percentile-main {
+    border-right: none;
+    border-bottom: 2px solid #e10600;
+    padding-right: 0;
+    padding-bottom: 30px;
+  }
+
+  .percentile-number {
+    font-size: 4rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
