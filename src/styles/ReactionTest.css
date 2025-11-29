@@ -1,0 +1,262 @@
+.reaction-test {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.reaction-test h2 {
+  font-size: 2rem;
+  color: #e10600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.test-instructions {
+  background-color: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.test-instructions p {
+  color: #cccccc;
+  line-height: 1.6;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.error-banner {
+  background-color: #1a0000;
+  color: #ff4444;
+  border: 2px solid #ff4444;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 600;
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+/* F1 Start Lights */
+.lights-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 40px 0;
+  padding: 40px;
+  background-color: #0a0a0a;
+  border-radius: 12px;
+  border: 3px solid #333;
+}
+
+.light-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.light {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid #333;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.light.on {
+  background: radial-gradient(circle, #ff0000, #cc0000);
+  box-shadow: 
+    0 0 30px #ff0000,
+    0 0 60px #ff0000,
+    inset 0 0 20px rgba(255, 0, 0, 0.8);
+  border-color: #ff0000;
+}
+
+.light.off {
+  background: radial-gradient(circle, #1a0000, #0a0000);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+  border-color: #222;
+}
+
+/* Click Zone */
+.click-zone {
+  background-color: #1a1a1a;
+  border: 4px solid #333;
+  border-radius: 12px;
+  padding: 80px 40px;
+  text-align: center;
+  margin: 40px 0;
+  cursor: default;
+  transition: all 0.3s;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.click-zone span {
+  font-size: 2rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+.click-zone.waiting {
+  border-color: #e10600;
+  background-color: #1a0000;
+}
+
+.click-zone.waiting span {
+  color: #e10600;
+  animation: pulse 1s infinite;
+}
+
+.click-zone.active {
+  background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+  border-color: #00ff00;
+  cursor: pointer;
+  box-shadow: 0 0 40px rgba(0, 255, 0, 0.6);
+  animation: glow 0.5s infinite alternate;
+}
+
+.click-zone.active span {
+  color: #000;
+  font-size: 3rem;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 40px rgba(0, 255, 0, 0.6); }
+  100% { box-shadow: 0 0 60px rgba(0, 255, 0, 0.9); }
+}
+
+/* Result Display */
+.result-display {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reaction-time {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #e10600;
+  text-shadow: 0 0 20px rgba(225, 6, 0, 0.5);
+  animation: scaleIn 0.5s ease-out;
+}
+
+.result-message {
+  font-size: 1.5rem;
+  color: #00ff88;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.saving-text {
+  font-size: 1rem;
+  color: #999;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Control Buttons */
+.test-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.start-test-btn,
+.retry-btn {
+  padding: 20px 50px;
+  background-color: #e10600;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 16px rgba(225, 6, 0, 0.4);
+}
+
+.start-test-btn:hover,
+.retry-btn:hover {
+  background-color: #b30500;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(225, 6, 0, 0.6);
+}
+
+.retry-btn {
+  background-color: #00ff88;
+  color: #000;
+  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.4);
+}
+
+.retry-btn:hover {
+  background-color: #00cc6a;
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.6);
+}
+
+@media (max-width: 768px) {
+  .lights-container {
+    gap: 10px;
+    padding: 20px;
+  }
+
+  .light {
+    width: 50px;
+    height: 50px;
+  }
+
+  .click-zone {
+    padding: 60px 20px;
+    min-height: 200px;
+  }
+
+  .click-zone span {
+    font-size: 1.5rem;
+  }
+
+  .click-zone.active span {
+    font-size: 2rem;
+  }
+
+  .reaction-time {
+    font-size: 3rem;
+  }
+
+  .result-message {
+    font-size: 1.2rem;
+  }
+}

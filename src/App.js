@@ -4,6 +4,7 @@ import './styles/App.css';
 import './styles/Login.css';
 import './styles/Home.css';
 import AccountSettings from './components/AccountSettings';
+import ReactionTest from './components/ReactionTest';
 
 // Supabase configuration
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'YOUR_SUPABASE_URL';
@@ -434,15 +435,8 @@ const Home = ({ user, onLogout }) => {
           </div>
         );
       case 'test':
-        return (
-          <div className="tab-content">
-            <h2>Reaction Test</h2>
-            <div className="test-area">
-              <p>Click the button below to start the test</p>
-              <button className="start-btn">Start Test</button>
-            </div>
-          </div>
-        );
+        return <ReactionTest user={user} />;
+        
       case 'leaderboards':
         return (
           <div className="tab-content">
