@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import './styles/App.css';
 import './styles/Login.css';
 import './styles/Home.css';
+import AccountSettings from './components/AccountSettings';
 
 // Supabase configuration
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'YOUR_SUPABASE_URL';
@@ -461,21 +462,8 @@ const Home = ({ user, onLogout }) => {
           </div>
         );
       case 'account':
-        return (
-          <div className="tab-content">
-            <h2>Account Management</h2>
-            <div className="account-info">
-              <p><strong>Username:</strong> {profile?.username || 'Not set'}</p>
-              <p><strong>Email:</strong> {user?.email}</p>
-              <p><strong>Age Range:</strong> {profile?.age_range ? profile.age_range.replace('_', '-').replace('plus', '+') : 'Not set'}</p>
-              <p><strong>Member Since:</strong> {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Unknown'}</p>
-              <button className="logout-btn" onClick={onLogout}>Logout</button>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
+        return <AccountSettings user={user} onLogout={onLogout} />;
+          }
   };
 
   return (
@@ -492,6 +480,12 @@ const Home = ({ user, onLogout }) => {
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
+          <button
+            className="logout-nav-btn"
+            onClick={onLogout}
+          >
+            Logout
+          </button>
         </div>
       </nav>
       <main className="main-content">
