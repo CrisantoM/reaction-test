@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './styles/App.css';
 import './styles/Login.css';
 import './styles/Home.css';
@@ -210,7 +211,7 @@ const Login = ({ onLogin }) => {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>Reaction Speed Tester</h1>
+        <h1>Reaction Speed Test</h1>
         <h2>{isSignUp ? 'Create Account' : 'Login'}</h2>
         
         {error && (
@@ -362,18 +363,68 @@ const ResetPassword = ({ onComplete }) => {
   );
 };
 
+// Performance Graph Component
+const PerformanceGraph = ({ tests }) => {
+  // Prepare data for chart (reverse to show oldest to newest)
+  const chartData = tests
+    .slice()
+    .reverse()
+    .map((test, index) => ({
+      test: index + 1,
+      time: test.reaction_time,
+      date: new Date(test.taken_at).toLocaleDateString()
+    }));
+
+  return (
+    <div style={{ width: '100%', height: 300 }}>
+      <ResponsiveContainer>
+        <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+          <XAxis 
+            dataKey="test" 
+            stroke="#999"
+            label={{ value: 'Test Number', position: 'insideBottom', offset: -5, fill: '#999' }}
+          />
+          <YAxis 
+            stroke="#999"
+            label={{ value: 'Reaction Time', angle: -90, position: 'insideLeft', fill: '#999' }}
+          />
+          <Tooltip 
+            contentStyle={{ 
+              backgroundColor: '#1a1a1a', 
+              border: '2px solid #e10600',
+              borderRadius: '8px',
+              color: '#fff'
+            }}
+            formatter={(value) => [`${value} ms`, 'Reaction Time']}
+            labelFormatter={(label) => `Test #${label}`}
+          />
+          <Line 
+            type="monotone" 
+            dataKey="time" 
+            stroke="#e10600" 
+            strokeWidth={3}
+            dot={{ fill: '#e10600', r: 5 }}
+            activeDot={{ r: 7 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
 // Home Component with Tabs
 const Home = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
+  const [recentTests, setRecentTests] = useState([]);
+  const [ageRangeStats, setAgeRangeStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Fetch user profile and stats
-    const fetchUserData = async () => {
-      if (user) {
-        console.log('Fetching user data for:', user.id);
-        
+  const fetchUserData = useCallback(async () => {
+    if (user) {
+      try {
         // Fetch profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
@@ -381,12 +432,8 @@ const Home = ({ user, onLogout }) => {
           .eq('id', user.id)
           .single();
         
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        } else {
-          console.log('Profile data loaded:', profileData);
-          setProfile(profileData);
-        }
+        if (profileError) throw profileError;
+        setProfile(profileData);
 
         // Fetch stats
         const { data: statsData, error: statsError } = await supabase
@@ -395,48 +442,231 @@ const Home = ({ user, onLogout }) => {
           .eq('user_id', user.id)
           .single();
         
-        if (statsError) {
-          console.error('Error fetching stats:', statsError);
-        } else {
-          console.log('Stats data loaded:', statsData);
-          setStats(statsData);
-        }
-      }
-    };
+        if (statsError) throw statsError;
+        setStats(statsData);
 
-    fetchUserData();
+        // Fetch recent test results (last 10)
+        const { data: testsData, error: testsError } = await supabase
+          .from('test_results')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('taken_at', { ascending: false })
+          .limit(10);
+        
+        if (testsError) throw testsError;
+        setRecentTests(testsData || []);
+
+        // Calculate age range percentile
+        if (profileData.age_range) {
+          await calculateAgeRangePercentile(profileData.age_range, statsData?.best_time);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
+
+  const calculateAgeRangePercentile = async (ageRange, userBestTime) => {
+    if (!userBestTime) {
+      setAgeRangeStats(null);
+      return;
+    }
+
+    try {
+      // Get all users in the same age range with their best times
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, user_stats(best_time)')
+        .eq('age_range', ageRange)
+        .not('user_stats.best_time', 'is', null);
+
+      if (error) throw error;
+
+      // Extract best times and filter out nulls
+      const bestTimes = data
+        .map(u => u.user_stats?.[0]?.best_time)
+        .filter(time => time !== null && time !== undefined);
+
+      if (bestTimes.length === 0) {
+        setAgeRangeStats(null);
+        return;
+      }
+
+      // Calculate percentile (how many users you're faster than)
+      const fasterThan = bestTimes.filter(time => time > userBestTime).length;
+      const percentile = Math.round((fasterThan / bestTimes.length) * 100);
+
+      // Calculate average for age range
+      const avgTime = Math.round(bestTimes.reduce((a, b) => a + b, 0) / bestTimes.length);
+
+      setAgeRangeStats({
+        percentile,
+        totalUsers: bestTimes.length,
+        averageTime: avgTime,
+        ageRange
+      });
+    } catch (error) {
+      console.error('Error calculating percentile:', error);
+      setAgeRangeStats(null);
+    }
+  };
+
+  const formatAgeRange = (range) => {
+    if (!range) return 'Not set';
+    return range.replace('_', '-').replace('plus', '+');
+  };
 
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
         return (
           <div className="tab-content">
-            <h1>Welcome to React Speed{profile?.username ? `, ${profile.username}` : ''}!</h1>
-            <p>Test your reaction time and compete with racers worldwide.</p>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <h3>Your Best Time</h3>
-                <p className="stat-value">
-                  {stats?.best_time ? `${stats.best_time} ms` : '--- ms'}
-                </p>
-              </div>
-              <div className="stat-card">
-                <h3>Tests Taken</h3>
-                <p className="stat-value">{stats?.total_tests || 0}</p>
-              </div>
-              <div className="stat-card">
-                <h3>Average Time</h3>
-                <p className="stat-value">
-                  {stats?.average_time ? `${Math.round(stats.average_time)} ms` : '--- ms'}
-                </p>
-              </div>
-            </div>
+            <h1>Welcome{profile?.username ? `, ${profile.username}` : ''}!</h1>
+            <p style={{ color: '#cccccc', fontSize: '1.1rem', marginBottom: '30px' }}>
+              See your recent performance here. Head to the Test tab to improve your reaction time!
+            </p>
+
+            {loading ? (
+              <div className="loading">Loading your stats...</div>
+            ) : (
+              <>
+                {/* Stats Grid */}
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <h3>Your Best Time</h3>
+                    <p className="stat-value">
+                      {stats?.best_time ? `${stats.best_time} ms` : '--- ms'}
+                    </p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Tests Taken</h3>
+                    <p className="stat-value">{stats?.total_tests || 0}</p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Average Time</h3>
+                    <p className="stat-value">
+                      {stats?.average_time ? `${Math.round(stats.average_time)} ms` : '--- ms'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Age Range Percentile */}
+                {ageRangeStats && (
+                  <div className="percentile-section">
+                    <h2>Your Age Group Performance</h2>
+                    <div className="percentile-card">
+                      <div className="percentile-main">
+                        <div className="percentile-number">{ageRangeStats.percentile}th</div>
+                        <div className="percentile-label">Percentile</div>
+                      </div>
+                      <div className="percentile-details">
+                        <p>
+                          <strong>Age Range:</strong> {formatAgeRange(ageRangeStats.ageRange)}
+                        </p>
+                        <p>
+                          You're faster than <strong>{ageRangeStats.percentile}%</strong> of users in your age group!
+                        </p>
+                        <p>
+                          <strong>Age Group Average:</strong> {ageRangeStats.averageTime} ms
+                        </p>
+                        <p>
+                          <strong>Your Best:</strong> {stats?.best_time} ms ({stats?.best_time < ageRangeStats.averageTime ? 'Above' : 'Below'} average by {Math.abs(stats?.best_time - ageRangeStats.averageTime)} ms)
+                        </p>
+                        <p className="sample-size">
+                          Based on {ageRangeStats.totalUsers} users in your age range
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Performance Graph */}
+                {recentTests.length > 0 && (
+                  <div className="graph-section">
+                    <h2>Recent Performance</h2>
+                    <div className="graph-container">
+                      <PerformanceGraph tests={recentTests} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick Stats */}
+                {stats && stats.total_tests > 0 && (
+                  <div className="quick-stats">
+                    <h2>Useful Information</h2>
+                    <div className="info-grid">
+                      <div className="info-card">
+                        <div className="info-icon">📊</div>
+                        <div className="info-content">
+                          <h3>Consistency</h3>
+                          <p>
+                            Your reaction times vary by{' '}
+                            <strong>{stats.worst_time - stats.best_time} ms</strong> between best and worst.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="info-card">
+                        <div className="info-icon">🎯</div>
+                        <div className="info-content">
+                          <h3>Performance</h3>
+                          <p>
+                            {stats.best_time < 250 
+                              ? 'Elite reflexes! You could compete professionally.'
+                              : stats.best_time < 300
+                              ? 'Excellent reflexes! Well above average.'
+                              : stats.best_time < 400
+                              ? 'Good reflexes! Keep practicing to improve.'
+                              : 'Average reflexes. More practice will help!'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="info-card">
+                        <div className="info-icon">⚡</div>
+                        <div className="info-content">
+                          <h3>Improvement</h3>
+                          <p>
+                            {stats.average_time > stats.best_time + 50
+                              ? 'Focus on consistency - you can match your best more often!'
+                              : 'Great consistency! Your average is close to your best.'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="info-card">
+                        <div className="info-icon">🏆</div>
+                        <div className="info-content">
+                          <h3>Goal</h3>
+                          <p>
+                            {stats.best_time >= 300
+                              ? 'Try to break 300ms for excellent reflexes!'
+                              : stats.best_time >= 250
+                              ? 'Try to break 250ms to reach elite status!'
+                              : 'You\'re in elite territory - aim for sub-200ms!'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* No data message */}
+                {stats?.total_tests === 0 && (
+                  <div className="no-data-message">
+                    <h2>No test data yet!</h2>
+                    <p>Head over to the Test tab to record your first reaction time.</p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         );
       case 'test':
         return <ReactionTest user={user} />;
-        
       case 'leaderboards':
         return (
           <div className="tab-content">
@@ -457,13 +687,20 @@ const Home = ({ user, onLogout }) => {
         );
       case 'account':
         return <AccountSettings user={user} onLogout={onLogout} />;
-          }
+      default:
+        return (
+          <div className="tab-content">
+            <h1>Page Not Found</h1>
+            <p>This tab doesn't exist.</p>
+          </div>
+        );
+    }
   };
 
   return (
     <div className="home-container">
       <nav className="navbar">
-        <h1 className="logo">Reaction Speed Tester</h1>
+        <h1 className="logo">Reaction Speed Test</h1>
         <div className="nav-tabs">
           {['home', 'test', 'leaderboards', 'account'].map(tab => (
             <button
