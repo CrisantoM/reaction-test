@@ -371,12 +371,6 @@
   box-shadow: 0 8px 24px rgba(225, 6, 0, 0.2);
 }
 
-.info-icon {
-  font-size: 3rem;
-  min-width: 60px;
-  text-align: center;
-}
-
 .info-content h3 {
   font-size: 1.2rem;
   color: #e10600;

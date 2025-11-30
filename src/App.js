@@ -6,6 +6,8 @@ import './styles/Login.css';
 import './styles/Home.css';
 import AccountSettings from './components/AccountSettings';
 import ReactionTest from './components/ReactionTest';
+import Leaderboard from './components/Leaderboard';
+import TestHistory from './components/TestHistory';
 
 // Supabase configuration
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'YOUR_SUPABASE_URL';
@@ -42,6 +44,19 @@ const Login = ({ onLogin }) => {
       if (isSignUp) {
         // Prepare the final username
         const finalUsername = username.trim() || email.split('@')[0];
+
+        // Check if username is already taken
+        const { data: existingUser, error: checkError } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', finalUsername)
+          .maybeSingle();
+
+        if (existingUser) {
+          setError('Username is already taken. Please choose another.');
+          setLoading(false);
+          return;
+        }
 
         console.log('=== SIGNUP STARTED ===');
         console.log('Email:', email);
@@ -420,6 +435,7 @@ const Home = ({ user, onLogout }) => {
   const [stats, setStats] = useState(null);
   const [recentTests, setRecentTests] = useState([]);
   const [ageRangeStats, setAgeRangeStats] = useState(null);
+  const [leaderboardPosition, setLeaderboardPosition] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUserData = useCallback(async () => {
@@ -456,9 +472,13 @@ const Home = ({ user, onLogout }) => {
         if (testsError) throw testsError;
         setRecentTests(testsData || []);
 
-        // Calculate age range percentile
         if (profileData.age_range) {
           await calculateAgeRangePercentile(profileData.age_range, statsData?.best_time);
+        }
+
+        // Fetch leaderboard position
+        if (statsData?.best_time) {
+          await fetchLeaderboardPosition(statsData.best_time);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -517,6 +537,29 @@ const Home = ({ user, onLogout }) => {
     }
   };
 
+  const fetchLeaderboardPosition = async (userBestTime) => {
+    if (!userBestTime) {
+      setLeaderboardPosition(null);
+      return;
+    }
+
+    try {
+      // Get count of users with better times
+      const { count, error } = await supabase
+        .from('user_stats')
+        .select('user_id', { count: 'exact', head: true })
+        .lt('best_time', userBestTime)
+        .not('best_time', 'is', null);
+
+      if (error) throw error;
+
+      // Position is count of better players + 1
+      setLeaderboardPosition((count || 0) + 1);
+    } catch (error) {
+      console.error('Error fetching leaderboard position:', error);
+      setLeaderboardPosition(null);
+    }
+  };
   const formatAgeRange = (range) => {
     if (!range) return 'Not set';
     return range.replace('_', '-').replace('plus', '+');
@@ -602,20 +645,36 @@ const Home = ({ user, onLogout }) => {
                     <h2>Useful Information</h2>
                     <div className="info-grid">
                       <div className="info-card">
-                        <div className="info-icon">📊</div>
                         <div className="info-content">
-                          <h3>Consistency</h3>
+                          <h3>Leaderboard Position</h3>
                           <p>
-                            Your reaction times vary by{' '}
-                            <strong>{stats.worst_time - stats.best_time} ms</strong> between best and worst.
+                            You placed <strong>#{leaderboardPosition || '---'}</strong> on the global leaderboard. Head to the Leaderboards tab to compare your performance with other racers.
                           </p>
                         </div>
                       </div>
+
                       <div className="info-card">
-                        <div className="info-icon">🎯</div>
+                        <div className="info-content">
+                          <h3>Age Group Percentile</h3>
+                          <p>
+                            {ageRangeStats ? (
+                              <>
+                                You are in the <strong>{ageRangeStats.percentile}th percentile</strong> for your age group. You're faster than <strong>{ageRangeStats.percentile}%</strong> of users aged {formatAgeRange(ageRangeStats.ageRange)}.
+                              </>
+                            ) : profile?.age_range ? (
+                              'Not enough data in your age group yet.'
+                            ) : (
+                              'Set your age range in Account settings to see your percentile.'
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="info-card">
                         <div className="info-content">
                           <h3>Performance</h3>
                           <p>
+                            Your best time is <strong>{stats.best_time} ms</strong>.{' '}
                             {stats.best_time < 250 
                               ? 'Elite reflexes! You could compete professionally.'
                               : stats.best_time < 300
@@ -626,27 +685,46 @@ const Home = ({ user, onLogout }) => {
                           </p>
                         </div>
                       </div>
+
                       <div className="info-card">
-                        <div className="info-icon">⚡</div>
                         <div className="info-content">
-                          <h3>Improvement</h3>
+                          <h3>Consistency</h3>
                           <p>
-                            {stats.average_time > stats.best_time + 50
-                              ? 'Focus on consistency - you can match your best more often!'
-                              : 'Great consistency! Your average is close to your best.'}
+                            Your average is <strong>{Math.round(stats.average_time)} ms</strong>.{' '}
+                            {stats.average_time <= stats.best_time + 50
+                              ? 'Your average is within 50ms of your best. Great consistency!'
+                              : `Your average is ${Math.round(stats.average_time - stats.best_time)}ms away from your best. Focus on consistency to match your best more often!`}
                           </p>
                         </div>
                       </div>
+
                       <div className="info-card">
-                        <div className="info-icon">🏆</div>
                         <div className="info-content">
-                          <h3>Goal</h3>
+                          <h3>Next Milestone</h3>
                           <p>
+                            Your best time is <strong>{stats.best_time} ms</strong>.{' '}
                             {stats.best_time >= 300
                               ? 'Try to break 300ms for excellent reflexes!'
                               : stats.best_time >= 250
                               ? 'Try to break 250ms to reach elite status!'
-                              : 'You\'re in elite territory - aim for sub-200ms!'}
+                              : stats.best_time >= 200
+                              ? 'Try to break 200ms for superhuman reflexes!'
+                              : 'You\'re already in superhuman territory!'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="info-card">
+                        <div className="info-content">
+                          <h3>Variability</h3>
+                          <p>
+                            Your reaction times vary by{' '}
+                            <strong>{stats.worst_time - stats.best_time} ms</strong> between best and worst.{' '}
+                            {stats.worst_time - stats.best_time < 100
+                              ? 'Excellent consistency across all tests!'
+                              : stats.worst_time - stats.best_time < 200
+                              ? 'Good consistency. Try to minimize variability.'
+                              : 'High variability. Focus on maintaining consistent performance.'}
                           </p>
                         </div>
                       </div>
@@ -668,23 +746,9 @@ const Home = ({ user, onLogout }) => {
       case 'test':
         return <ReactionTest user={user} />;
       case 'leaderboards':
-        return (
-          <div className="tab-content">
-            <h2>Leaderboards</h2>
-            <div className="leaderboard-table">
-              <div className="leaderboard-header">
-                <span>Rank</span>
-                <span>Player</span>
-                <span>Best Time</span>
-              </div>
-              <div className="leaderboard-row">
-                <span>1</span>
-                <span>Loading...</span>
-                <span>--- ms</span>
-              </div>
-            </div>
-          </div>
-        );
+        return <Leaderboard user={user} />;
+      case 'history':
+        return <TestHistory user={user} />;
       case 'account':
         return <AccountSettings user={user} onLogout={onLogout} />;
       default:
@@ -702,7 +766,7 @@ const Home = ({ user, onLogout }) => {
       <nav className="navbar">
         <h1 className="logo">Reaction Speed Test</h1>
         <div className="nav-tabs">
-          {['home', 'test', 'leaderboards', 'account'].map(tab => (
+          {['home', 'test', 'history', 'leaderboards', 'account'].map(tab => (
             <button
               key={tab}
               className={activeTab === tab ? 'active' : ''}

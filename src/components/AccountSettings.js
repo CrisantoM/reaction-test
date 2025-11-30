@@ -82,33 +82,65 @@ const AccountSettings = ({ user, onLogout }) => {
   };
 
   const handleUpdateUsername = async () => {
-    setUsernameError('');
-    setSuccessMessage('');
+  setUsernameError('');
+  setSuccessMessage('');
 
-    const error = validateUsername(newUsername);
-    if (error) {
-      setUsernameError(error);
+  const error = validateUsername(newUsername);
+  if (error) {
+    setUsernameError(error);
+    return;
+  }
+
+  setUpdatingUsername(true);
+
+  try {
+    // Check if username is already taken
+    const { data: existingUser, error: checkError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', newUsername)
+      .neq('id', user.id)
+      .single();
+
+    if (existingUser) {
+      setUsernameError('Username is already taken');
+      setUpdatingUsername(false);
       return;
     }
 
-    setUpdatingUsername(true);
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ username: newUsername })
+      .eq('id', user.id);
 
-    try {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ username: newUsername })
-        .eq('id', user.id);
+    if (updateError) throw updateError;
 
-      if (updateError) throw updateError;
+    setSuccessMessage('Username updated successfully!');
+    setProfile({ ...profile, username: newUsername });
+  } catch (error) {
+    // Handle case where no existing user found (this is good)
+    if (error.code === 'PGRST116') {
+      // No matching user found, proceed with update
+      try {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ username: newUsername })
+          .eq('id', user.id);
 
-      setSuccessMessage('Username updated successfully!');
-      setProfile({ ...profile, username: newUsername });
-    } catch (error) {
+        if (updateError) throw updateError;
+
+        setSuccessMessage('Username updated successfully!');
+        setProfile({ ...profile, username: newUsername });
+      } catch (err) {
+        setUsernameError(err.message);
+      }
+    } else {
       setUsernameError(error.message);
-    } finally {
-      setUpdatingUsername(false);
     }
-  };
+  } finally {
+    setUpdatingUsername(false);
+  }
+};
 
   const handleUpdateEmail = async () => {
     setEmailError('');
