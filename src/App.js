@@ -496,26 +496,55 @@ const Home = ({ user, onLogout }) => {
 
   const calculateAgeRangePercentile = async (ageRange, userBestTime) => {
     if (!userBestTime) {
+      console.log('No userBestTime provided');
       setAgeRangeStats(null);
       return;
     }
 
     try {
-      // Get all users in the same age range with their best times
-      const { data, error } = await supabase
+      // First, get all profiles in the age range
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, user_stats(best_time)')
-        .eq('age_range', ageRange)
-        .not('user_stats.best_time', 'is', null);
+        .select('id')
+        .eq('age_range', ageRange);
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      // Extract best times and filter out nulls
-      const bestTimes = data
-        .map(u => u.user_stats?.[0]?.best_time)
-        .filter(time => time !== null && time !== undefined);
+      console.log('Profiles in age range:', profilesData);
+
+      if (!profilesData || profilesData.length === 0) {
+        console.log('No profiles found in age range');
+        setAgeRangeStats(null);
+        return;
+      }
+
+      // Get user IDs
+      const userIds = profilesData.map(p => p.id);
+
+      // Now get stats for these users
+      const { data: statsData, error: statsError } = await supabase
+        .from('user_stats')
+        .select('user_id, best_time')
+        .in('user_id', userIds)
+        .not('best_time', 'is', null);
+
+      if (statsError) throw statsError;
+
+      console.log('Stats data:', statsData);
+
+      if (!statsData || statsData.length === 0) {
+        console.log('No stats found for users in age range');
+        setAgeRangeStats(null);
+        return;
+      }
+
+      // Extract best times
+      const bestTimes = statsData.map(s => s.best_time);
+
+      console.log('Best times:', bestTimes);
 
       if (bestTimes.length === 0) {
+        console.log('No best times found');
         setAgeRangeStats(null);
         return;
       }
@@ -537,7 +566,7 @@ const Home = ({ user, onLogout }) => {
       console.error('Error calculating percentile:', error);
       setAgeRangeStats(null);
     }
-  };
+    };
 
   const fetchLeaderboardPosition = async (userBestTime) => {
     if (!userBestTime) {
@@ -678,7 +707,7 @@ const Home = ({ user, onLogout }) => {
                           <p>
                             Your best time is <strong>{stats.best_time} ms</strong>.{' '}
                             {stats.best_time < 250 
-                              ? 'Elite reflexes! You could compete professionally.'
+                              ? 'Elite reflexes! Your reaction time is comparable to professional drivers.'
                               : stats.best_time < 300
                               ? 'Excellent reflexes! Well above average.'
                               : stats.best_time < 400
